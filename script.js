@@ -303,24 +303,102 @@ function initLoveMessages() {
 // ==================== VIDEO PLAYER ====================
 function initVideoPlayer() {
     const overlay = document.getElementById('videoOverlay');
-    const video  = document.getElementById('loveVideo');
+    const video   = document.getElementById('loveVideo');
+    const playBtn = overlay ? overlay.querySelector('.play-btn') : null;
 
     if (!overlay || !video) return;
 
-    // Click on overlay → play & hide it
-    overlay.addEventListener('click', () => {
-        video.play();
-        overlay.classList.add('hidden');
-    });
+    /* ---- helper: show loading spinner inside play-btn ---- */
+    function setLoading(on) {
+        if (!playBtn) return;
+        if (on) {
+            playBtn.innerHTML = `<svg viewBox="0 0 50 50" width="36" height="36"
+                style="animation:spin 1s linear infinite;">
+                <circle cx="25" cy="25" r="20" fill="none"
+                    stroke="#1a0a0f" stroke-width="5"
+                    stroke-dasharray="80 20"/>
+            </svg>
+            <style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
+        } else {
+            playBtn.innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
+                style="width:32px;height:32px;fill:#1a0a0f;margin-right:-4px;">
+                <path d="M8 5v14l11-7z"/>
+            </svg>`;
+        }
+    }
 
-    // If user uses native controls to play, hide overlay
+    /* ---- helper: attempt to play with proper promise handling ---- */
+    function tryPlay() {
+        setLoading(true);
+        overlay.style.pointerEvents = 'none'; // prevent double-click
+
+        const promise = video.play();
+        if (promise !== undefined) {
+            promise
+                .then(() => {
+                    // Playback started successfully
+                    overlay.classList.add('hidden');
+                    setLoading(false);
+                })
+                .catch((err) => {
+                    console.warn('Video play failed:', err);
+                    setLoading(false);
+                    overlay.style.pointerEvents = 'auto';
+                    // Try muted first (browser policy), then unmute
+                    if (!video.muted) {
+                        video.muted = true;
+                        video.play().then(() => {
+                            video.muted = false;
+                            overlay.classList.add('hidden');
+                        }).catch(() => {
+                            overlay.style.pointerEvents = 'auto';
+                        });
+                    }
+                });
+        } else {
+            // Older browser — no promise
+            overlay.classList.add('hidden');
+            setLoading(false);
+        }
+    }
+
+    // Click on overlay → play
+    overlay.addEventListener('click', tryPlay);
+
+    // Native controls: if play starts, hide overlay
     video.addEventListener('play', () => {
         overlay.classList.add('hidden');
+        overlay.style.pointerEvents = 'auto';
+        setLoading(false);
     });
 
-    // If video is paused, show overlay again
+    // Show buffering indicator while waiting
+    video.addEventListener('waiting', () => {
+        setLoading(true);
+    });
+
+    video.addEventListener('canplay', () => {
+        setLoading(false);
+    });
+
+    // On pause → show overlay again (but only when video not ended)
     video.addEventListener('pause', () => {
-        overlay.classList.remove('hidden');
+        if (!video.ended) {
+            overlay.classList.remove('hidden');
+            overlay.style.pointerEvents = 'auto';
+        }
+    });
+
+    video.addEventListener('ended', () => {
+        overlay.classList.add('hidden');
+    });
+
+    // Error handling
+    video.addEventListener('error', () => {
+        if (playBtn) {
+            playBtn.innerHTML = `<span style="font-size:13px;color:#1a0a0f;font-family:'Cairo',sans-serif;text-align:center;padding:5px;">⚠️<br>تعذّر تحميل<br>الفيديو</span>`;
+        }
+        overlay.style.pointerEvents = 'none';
     });
 }
 
