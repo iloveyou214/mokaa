@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>انما انت انا</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Swiper CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #1a0a0f 0%, #3d1520 30%, #5c1f33 60%, #1a0a0f 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #d4af37 0%, #f4e4c1 50%, #d4af37 100%);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #f4e4c1 0%, #d4af37 50%, #f4e4c1 100%);
+        }
+
+        /* Floating Hearts Animation */
+        .floating-hearts {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .heart {
+            position: absolute;
+            font-size: 20px;
+            opacity: 0;
+            animation: float-up 15s infinite ease-in-out;
+        }
+
+        @keyframes float-up {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Password Overlay */
+        .password-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a0a0f 0%, #4a1625 50%, #1a0a0f 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 1s ease, visibility 1s ease;
+        }
+
+        .password-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .password-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-radius: 30px;
+            padding: 50px 40px;
+            box-shadow: 0 20px 60px rgba(212, 175, 55, 0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            transition: transform 0.3s ease;
+        }
+
+        .password-container.shake {
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+            20%, 40%, 60%, 80% { transform: translateX(10px); }
+        }
+
+        .password-container.error {
+            border-color: rgba(255, 100, 100, 0.6);
+            box-shadow: 0 20px 60px rgba(255, 100, 100, 0.3);
+        }
+
+        .password-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-radius: 15px;
+            padding: 15px 20px;
+            width: 100%;
+            font-size: 18px;
+            color: white;
+            text-align: center;
+            font-family: 'Cairo', sans-serif;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .password-input:focus {
+            outline: none;
+            border-color: rgba(212, 175, 55, 0.8);
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+        }
+
+        .password-btn {
+            background: linear-gradient(135deg, #d4af37 0%, #f4e4c1 100%);
+            border: none;
+            border-radius: 15px;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a0a0f;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .password-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.4);
+        }
+
+        /* Main Content */
+        .main-content {
+            position: relative;
+            z-index: 2;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Relationship Counter */
+        .counter-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-radius: 25px;
+            padding: 30px 20px;
+            margin: 20px auto 40px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(212, 175, 55, 0.2);
+            animation: glow-pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes glow-pulse {
+            0%, 100% {
+                box-shadow: 0 20px 60px rgba(212, 175, 55, 0.2);
+            }
+            50% {
+                box-shadow: 0 20px 80px rgba(212, 175, 55, 0.4);
+            }
+        }
+
+        .counter-title {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #d4af37 0%, #f4e4c1 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            font-family: 'Amiri', serif;
+        }
+
+        .counter-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .counter-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 15px 10px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .counter-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: #f4e4c1;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .counter-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 400;
+        }
+
+        /* Swiper Container */
+        .swiper-container {
+            width: 100%;
+            height: 70vh;
+            margin: 40px auto;
+            border-radius: 25px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .swiper {
+            width: 100%;
+            height: 100%;
+        }
+
+        .swiper-slide {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 25px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .swiper-slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: inherit;
+            filter: blur(40px);
+            opacity: 0.5;
+            z-index: 0;
+        }
+
+        .swiper-slide img {
+            position: relative;
+            z-index: 1;
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            transition: transform 0.5s ease;
+        }
+
+        .swiper-slide-active img {
+            animation: zoom-in 0.6s ease forwards;
+        }
+
+        @keyframes zoom-in {
+            from {
+                transform: scale(0.95);
+                opacity: 0.8;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .image-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(212, 175, 55, 0.2);
+            border-radius: 25px;
+            box-shadow: 0 0 40px rgba(212, 175, 55, 0.15);
+        }
+
+        /* Swiper Navigation */
+        .swiper-button-next,
+        .swiper-button-prev {
+            color: #d4af37 !important;
+            background: rgba(212, 175, 55, 0.2);
+            width: 50px !important;
+            height: 50px !important;
+            border-radius: 50%;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .swiper-button-next:hover,
+        .swiper-button-prev:hover {
+            background: rgba(212, 175, 55, 0.4);
+            transform: scale(1.1);
+        }
+
+        .swiper-button-next::after,
+        .swiper-button-prev::after {
+            font-size: 20px !important;
+            font-weight: 900;
+        }
+
+        .swiper-pagination-bullet {
+            background: rgba(212, 175, 55, 0.5) !important;
+            opacity: 1 !important;
+            width: 10px !important;
+            height: 10px !important;
+        }
+
+        .swiper-pagination-bullet-active {
+            background: #d4af37 !important;
+            width: 30px !important;
+            border-radius: 5px !important;
+        }
+
+        /* Love Message Button */
+        .love-button-container {
+            text-align: center;
+            margin: 50px auto;
+        }
+
+        .love-button {
+            background: linear-gradient(135deg, #d4af37 0%, #f4e4c1 50%, #d4af37 100%);
+            border: none;
+            border-radius: 20px;
+            padding: 20px 40px;
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a0a0f;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            box-shadow: 0 10px 40px rgba(212, 175, 55, 0.4);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .love-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .love-button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .love-button:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 50px rgba(212, 175, 55, 0.6);
+        }
+
+        .love-button span {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Love Message Display */
+        .love-message {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(244, 228, 193, 0.1) 100%);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-radius: 25px;
+            padding: 40px 30px;
+            margin: 30px auto;
+            max-width: 600px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(212, 175, 55, 0.3);
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.5s ease;
+        }
+
+        .love-message.show {
+            opacity: 1;
+            transform: scale(1);
+            animation: message-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes message-glow {
+            0%, 100% {
+                box-shadow: 0 20px 60px rgba(212, 175, 55, 0.3);
+            }
+            50% {
+                box-shadow: 0 20px 80px rgba(212, 175, 55, 0.5);
+            }
+        }
+
+        .love-message p {
+            font-size: 24px;
+            font-weight: 600;
+            color: #f4e4c1;
+            line-height: 1.8;
+            font-family: 'Amiri', serif;
+        }
+
+        /* Video Section */
+        .video-section {
+            margin: 60px auto 40px;
+            text-align: center;
+        }
+
+        .video-section-title {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #d4af37 0%, #f4e4c1 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 25px;
+            font-family: 'Amiri', serif;
+            animation: glow-pulse 3s ease-in-out infinite;
+        }
+
+        .video-wrapper {
+            position: relative;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(212, 175, 55, 0.4);
+            border-radius: 25px;
+            padding: 15px;
+            box-shadow: 0 20px 60px rgba(212, 175, 55, 0.25),
+                        0 0 80px rgba(212, 175, 55, 0.08);
+            overflow: hidden;
+            transition: box-shadow 0.4s ease;
+        }
+
+        .video-wrapper:hover {
+            box-shadow: 0 25px 80px rgba(212, 175, 55, 0.4),
+                        0 0 100px rgba(212, 175, 55, 0.15);
+        }
+
+        .video-wrapper video {
+            width: 100%;
+            max-height: 70vh;
+            border-radius: 15px;
+            display: block;
+            outline: none;
+            background: #000;
+        }
+
+        .video-overlay {
+            position: absolute;
+            inset: 15px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.45);
+            cursor: pointer;
+            transition: background 0.3s ease;
+            z-index: 5;
+        }
+
+        .video-overlay:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .video-overlay.hidden {
+            display: none;
+        }
+
+        .play-btn {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #d4af37 0%, #f4e4c1 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 40px rgba(212, 175, 55, 0.6);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: pulse-play 2s ease-in-out infinite;
+        }
+
+        .play-btn svg {
+            width: 32px;
+            height: 32px;
+            fill: #1a0a0f;
+            margin-right: -4px;
+        }
+
+        .video-overlay:hover .play-btn {
+            transform: scale(1.15);
+            box-shadow: 0 0 60px rgba(212, 175, 55, 0.9);
+            animation: none;
+        }
+
+        @keyframes pulse-play {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(212, 175, 55, 0.6); }
+            50%       { transform: scale(1.08); box-shadow: 0 0 60px rgba(212, 175, 55, 0.9); }
+        }
+
+        .video-caption {
+            margin-top: 18px;
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.6);
+            font-family: 'Amiri', serif;
+            letter-spacing: 0.5px;
+        }
+
+        @media (max-width: 768px) {
+            .counter-title {
+                font-size: 22px;
+            }
+
+            .counter-value {
+                font-size: 24px;
+            }
+
+            .counter-label {
+                font-size: 12px;
+            }
+
+            .swiper-container {
+                height: 60vh;
+            }
+
+            .love-button {
+                font-size: 18px;
+                padding: 18px 30px;
+            }
+
+            .love-message p {
+                font-size: 20px;
+            }
+
+            .password-container {
+                padding: 40px 30px;
+            }
+
+            .play-btn {
+                width: 65px;
+                height: 65px;
+            }
+
+            .video-section-title {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating Hearts Background -->
+    <div class="floating-hearts" id="floatingHearts"></div>
+
+    <!-- Password Overlay -->
+    <div class="password-overlay" id="passwordOverlay">
+        <div class="password-container" id="passwordContainer">
+            <h1 style="font-size: 36px; color: #f4e4c1; margin-bottom: 15px; font-family: 'Amiri', serif;">❤️</h1>
+            <h2 style="font-size: 24px; color: #d4af37; margin-bottom: 10px; font-weight: 700;">أدخلي كلمة السر</h2>
+            <p style="color: rgba(255, 255, 255, 0.7); font-size: 16px;">عشان تشوفي ذكرياتنا الجميلة</p>
+            <input type="password" class="password-input" id="passwordInput" placeholder="اكتبي كلمة السر هنا">
+            <button class="password-btn" id="passwordBtn">دخول ❤️</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Relationship Counter -->
+        <div class="counter-container">
+            <div class="counter-title">بقالنا سوا ❤️</div>
+            <div class="counter-grid">
+                <div class="counter-item">
+                    <span class="counter-value" id="years">0</span>
+                    <span class="counter-label">سنة</span>
+                </div>
+                <div class="counter-item">
+                    <span class="counter-value" id="months">0</span>
+                    <span class="counter-label">شهر</span>
+                </div>
+                <div class="counter-item">
+                    <span class="counter-value" id="days">0</span>
+                    <span class="counter-label">يوم</span>
+                </div>
+            </div>
+            <div class="counter-grid">
+                <div class="counter-item">
+                    <span class="counter-value" id="hours">0</span>
+                    <span class="counter-label">ساعة</span>
+                </div>
+                <div class="counter-item">
+                    <span class="counter-value" id="minutes">0</span>
+                    <span class="counter-label">دقيقة</span>
+                </div>
+                <div class="counter-item">
+                    <span class="counter-value" id="seconds">0</span>
+                    <span class="counter-label">ثانية</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screenshot Swiper -->
+        <div class="swiper-container">
+            <div class="swiper mySwiper">
+                <div class="swiper-wrapper" id="swiperWrapper">
+                    <!-- Images will be loaded dynamically -->
+                </div>
+                <div class="swiper-button-next"></div>
+                <div class="swiper-button-prev"></div>
+                <div class="swiper-pagination"></div>
+            </div>
+        </div>
+
+        <!-- Love Message Button -->
+        <div class="love-button-container">
+            <button class="love-button" id="loveButton">
+                <span> ماسدج او 2 ف اليوم ي حب دوسي هنا 😂❤️ </span>
+            </button>
+        </div>
+
+        <!-- Love Message Display -->
+        <div class="love-message" id="loveMessage">
+            <p id="messageText"></p>
+        </div>
+
+        <!-- Video Section -->
+        <div class="video-section">
+            <div class="video-section-title">🎬❤️</div>
+            <div class="video-wrapper">
+                <!-- Custom Play Overlay -->
+                <div class="video-overlay" id="videoOverlay">
+                    <div class="play-btn">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                    </div>
+                </div>
+                <video id="loveVideo" preload="metadata" controls>
+                    <source src="VID-20260225-WA0003.mp4" type="video/mp4">
+                </video>
+            </div>
+            <p class="video-caption">بحبك كتييير ي ملوكي ❤️</p>
+        </div>
+    </div>
+
+    <!-- Swiper JS -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+    <!-- Main JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>
