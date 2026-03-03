@@ -557,6 +557,180 @@
             letter-spacing: 0.5px;
         }
 
+        /* Voice Recorder Section */
+        .voice-recorder-section {
+            margin: 60px auto 40px;
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .recorder-title {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #d4af37 0%, #f4e4c1 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 25px;
+            font-family: 'Amiri', serif;
+            animation: glow-pulse 3s ease-in-out infinite;
+        }
+
+        .recorder-container {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(212, 175, 55, 0.4);
+            border-radius: 25px;
+            padding: 30px 20px;
+            box-shadow: 0 20px 60px rgba(212, 175, 55, 0.25);
+            transition: box-shadow 0.4s ease;
+        }
+
+        .recorder-container:hover {
+            box-shadow: 0 25px 80px rgba(212, 175, 55, 0.4);
+        }
+
+        .recorder-status {
+            font-size: 18px;
+            color: #d4af37;
+            margin-bottom: 15px;
+            font-family: 'Cairo', sans-serif;
+            transition: color 0.3s;
+        }
+
+        .recorder-status.recording {
+            color: #ff4d4d;
+            animation: pulse-red 1.5s infinite;
+        }
+        
+        @keyframes pulse-red {
+            0% { text-shadow: 0 0 10px rgba(255, 77, 77, 0.2); }
+            50% { text-shadow: 0 0 20px rgba(255, 77, 77, 0.8); }
+            100% { text-shadow: 0 0 10px rgba(255, 77, 77, 0.2); }
+        }
+
+        .time-display {
+            font-size: 40px;
+            font-weight: 700;
+            color: #f4e4c1;
+            font-family: 'Amiri', serif;
+            margin-bottom: 25px;
+            letter-spacing: 2px;
+        }
+
+        .recorder-controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .recorder-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .record-btn {
+            background: linear-gradient(135deg, #d4af37 0%, #f4e4c1 100%);
+            color: #1a0a0f;
+        }
+
+        .record-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(212, 175, 55, 0.5);
+        }
+
+        .stop-btn {
+            background: linear-gradient(135deg, #ff4d4d 0%, #ff1a1a 100%);
+            color: white;
+            animation: pulse-recording 1.5s infinite;
+        }
+        
+        @keyframes pulse-recording {
+            0% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(255, 77, 77, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); }
+        }
+
+        .stop-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(255, 77, 77, 0.5);
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(76, 175, 80, 0.5);
+        }
+
+        .send-btn.loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .recordings-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .audio-item {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 15px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fade-in-up 0.5s ease forwards;
+        }
+
+        @keyframes fade-in-up {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .audio-date {
+            font-size: 14px;
+            color: #d4af37;
+            text-align: right;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        audio {
+            width: 100%;
+            height: 40px;
+            border-radius: 20px;
+            background: #f4e4c1;
+            outline: none;
+        }
+        
+        audio::-webkit-media-controls-panel {
+            background: #f4e4c1;
+        }
+
         @media (max-width: 768px) {
             .counter-title {
                 font-size: 22px;
@@ -594,6 +768,20 @@
 
             .video-section-title {
                 font-size: 22px;
+            }
+
+            .recorder-title {
+                font-size: 24px;
+            }
+
+            .time-display {
+                font-size: 32px;
+            }
+
+            .recorder-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
             }
         }
     </style>
@@ -670,6 +858,26 @@
         <!-- Love Message Display -->
         <div class="love-message" id="loveMessage">
             <p id="messageText"></p>
+        </div>
+
+        <!-- Voice Recorder Section -->
+        <div class="voice-recorder-section">
+            <div class="recorder-title">سجلي صوتك هنا 🎙️</div>
+            <div class="recorder-container">
+                <div class="recorder-status" id="recorderStatus">جاهز للتسجيل</div>
+                <div class="time-display" id="timeDisplay">00:00</div>
+                
+                <div class="recorder-controls">
+                    <button class="recorder-btn record-btn" id="startRecordBtn" title="بدء التسجيل">🎙️</button>
+                    <button class="recorder-btn stop-btn hidden" id="stopRecordBtn" title="إيقاف التسجيل">⏹️</button>
+                    <button class="recorder-btn send-btn hidden" id="sendRecordBtn" title="إرسال">📤</button>
+                </div>
+
+                <!-- Recordings List -->
+                <div class="recordings-list" id="recordingsList">
+                    <!-- Audio items will be appended here -->
+                </div>
+            </div>
         </div>
 
         <!-- Video Section -->

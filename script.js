@@ -402,6 +402,230 @@ function initVideoPlayer() {
     });
 }
 
+// ==================== VOICE RECORDER ====================
+function initVoiceRecorder() {
+    const startRecordBtn = document.getElementById('startRecordBtn');
+    const stopRecordBtn = document.getElementById('stopRecordBtn');
+    const sendRecordBtn = document.getElementById('sendRecordBtn');
+    const recorderStatus = document.getElementById('recorderStatus');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const recordingsList = document.getElementById('recordingsList');
+    
+    // Cloudinary Config
+    // ⚠️ أضف اسم السحابة والـ Upload Preset هنا ⚠️
+    const CLOUD_NAME = "draqszzrb";
+    const UPLOAD_PRESET = "draqszzrb";
+    
+    // تأكد من استخدام /video/upload حتى يدعم كلاوديناري ملفات الصوت
+    const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`;
+
+    let mediaRecorder;
+    let audioChunks = [];
+    let startTime;
+    let timerInterval;
+    let recordedBlob = null;
+
+    if (!startRecordBtn) return;
+
+    // Load saved recordings
+    loadRecordings();
+
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function updateTimer() {
+        const now = Date.now();
+        const diff = Math.floor((now - startTime) / 1000);
+        timeDisplay.textContent = formatTime(diff);
+    }
+
+    startRecordBtn.addEventListener('click', async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            
+            mediaRecorder.ondataavailable = event => {
+                if (event.data.size > 0) {
+                    audioChunks.push(event.data);
+                }
+            };
+            
+            mediaRecorder.onstop = () => {
+                const options = { type: 'audio/webm' };
+                recordedBlob = new Blob(audioChunks, options);
+                audioChunks = [];
+                
+                // Show send button
+                sendRecordBtn.classList.remove('hidden');
+                recorderStatus.textContent = "تم التسجيل، جاهز للإرسال";
+                recorderStatus.classList.remove('recording');
+                
+                // Stop microphone access
+                stream.getTracks().forEach(track => track.stop());
+            };
+            
+            audioChunks = [];
+            mediaRecorder.start();
+            
+            // UI Updates
+            startRecordBtn.classList.add('hidden');
+            stopRecordBtn.classList.remove('hidden');
+            sendRecordBtn.classList.add('hidden');
+            
+            recorderStatus.textContent = "جاري التسجيل...";
+            recorderStatus.classList.add('recording');
+            
+            startTime = Date.now();
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 1000);
+            
+        } catch (error) {
+            console.error("Error accessing microphone:", error);
+            alert("يرجى السماح بالوصول إلى الميكروفون للتسجيل.");
+        }
+    });
+
+    stopRecordBtn.addEventListener('click', () => {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+            clearInterval(timerInterval);
+            
+            stopRecordBtn.classList.add('hidden');
+            startRecordBtn.classList.remove('hidden');
+        }
+    });
+
+    sendRecordBtn.addEventListener('click', async () => {
+        if (!recordedBlob) return;
+        
+        sendRecordBtn.classList.add('loading');
+        sendRecordBtn.textContent = "⏳";
+        sendRecordBtn.style.animation = "spin 2s linear infinite";
+        recorderStatus.textContent = "جاري الرفع...";
+        
+        try {
+            const formData = new FormData();
+            formData.append('file', recordedBlob);
+            formData.append('upload_preset', UPLOAD_PRESET);
+            formData.append('resource_type', 'video'); // Cloudinary treats audio as video resource type
+            
+            // Upload to Cloudinary Unsigned
+            const response = await fetch(CLOUDINARY_URL, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.secure_url) {
+                // Save URL securely and show on the page
+                saveRecording(data.secure_url);
+                showSoftHeartsAnimation();
+                
+                // === Send to Google Apps Script ===
+                try {
+                    const scriptUrl = "https://script.google.com/macros/s/AKfycbwsAb2yo75H8tBgc4MO14wY0eMfuxt6TsQ3BjolpnXYf20FWJtegHbBeMu_SkPLAIYV/exec";
+                    await fetch(scriptUrl, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ url: data.secure_url })
+                    });
+                    console.log("Successfully sent URL to Google Apps Script");
+                } catch (googleErr) {
+                    console.error("Failed to send URL to Google Apps Script:", googleErr);
+                }
+                
+                // Reset UI
+                sendRecordBtn.classList.add('hidden');
+                sendRecordBtn.classList.remove('loading');
+                sendRecordBtn.style.animation = "";
+                sendRecordBtn.textContent = "📤";
+                recorderStatus.textContent = "تم الحفظ بنجاح! 💖";
+                timeDisplay.textContent = "00:00";
+                recordedBlob = null;
+                
+                setTimeout(() => {
+                    recorderStatus.textContent = "جاهز للتسجيل";
+                }, 3000);
+            } else {
+                throw new Error("لم يتم إرجاع رابط من السحابة");
+            }
+            
+        } catch (error) {
+            console.error("Upload failed:", error);
+            recorderStatus.textContent = "فشل الرفع، يرجى المحاولة مرة أخرى.";
+            sendRecordBtn.classList.remove('loading');
+            sendRecordBtn.style.animation = "";
+            sendRecordBtn.textContent = "📤";
+        }
+    });
+
+    function saveRecording(url) {
+        const recordings = JSON.parse(localStorage.getItem('romanticRecordings') || '[]');
+        const newRecord = {
+            url: url,
+            date: new Date().toISOString()
+        };
+        recordings.push(newRecord);
+        localStorage.setItem('romanticRecordings', JSON.stringify(recordings));
+        
+        addRecordingToDOM(newRecord);
+    }
+
+    function loadRecordings() {
+        const recordings = JSON.parse(localStorage.getItem('romanticRecordings') || '[]');
+        recordings.forEach(rec => addRecordingToDOM(rec));
+    }
+
+    function addRecordingToDOM(recording) {
+        const dateObj = new Date(recording.date);
+        const dateStr = dateObj.toLocaleDateString('ar-EG', {
+            year: 'numeric', month: 'long', day: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+        
+        const audioItem = document.createElement('div');
+        audioItem.className = 'audio-item';
+        
+        audioItem.innerHTML = `
+            <div class="audio-date">${dateStr}</div>
+            <audio controls src="${recording.url}"></audio>
+        `;
+        
+        // Prepend to show newest first
+        recordingsList.insertBefore(audioItem, recordingsList.firstChild);
+    }
+
+    function showSoftHeartsAnimation() {
+        const container = document.getElementById('floatingHearts');
+        if (!container) return;
+        for (let i = 0; i < 15; i++) {
+            setTimeout(() => {
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                heart.textContent = '💖';
+                heart.style.left = (40 + Math.random() * 20) + '%';
+                heart.style.bottom = '20%';
+                heart.style.animationDuration = (3 + Math.random() * 3) + 's';
+                heart.style.transform = `scale(${0.8 + Math.random()})`;
+                
+                // Since our hearts use float-up animation naturally, we just append them.
+                container.appendChild(heart);
+                
+                setTimeout(() => {
+                    heart.remove();
+                }, 5000);
+            }, i * 200);
+        }
+    }
+}
+
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', () => {
     createFloatingHearts();
@@ -409,6 +633,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initSwiper();
     initLoveMessages();
     initVideoPlayer();
+    initVoiceRecorder();
     
     // Start counter
     updateCounter();
